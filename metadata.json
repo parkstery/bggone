@@ -1,0 +1,5 @@
+{
+  "name": "Gemini Background Remover",
+  "description": "A powerful AI-driven tool that removes image backgrounds instantly using the Google Gemini API.",
+  "requestFramePermissions": []
+}
