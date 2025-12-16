@@ -1,23 +1,35 @@
 import { GoogleGenAI } from "@google/genai";
 
 const getClient = () => {
-  const apiKey = process.env.API_KEY;
+  // 1. process.env.API_KEY (vite.config.ts의 define 설정)
+  // 2. import.meta.env.VITE_API_KEY (Vite 표준 방식)
+  // 3. import.meta.env.API_KEY (일부 환경 호환)
+  const apiKey = process.env.API_KEY || import.meta.env.VITE_API_KEY || import.meta.env.API_KEY;
+
   if (!apiKey) {
-    throw new Error("API Key is missing. Please check your environment configuration.");
+    console.error("API Key config check failed. Environment variables:", {
+      processEnv: !!process.env.API_KEY,
+      viteEnv: !!import.meta.env.VITE_API_KEY
+    });
+    throw new Error("API Key is missing. Please set 'API_KEY' in your .env file and restart the server.");
   }
   return new GoogleGenAI({ apiKey });
 };
 
 /**
  * Sends an image to Gemini to remove its background.
- * @param base64Image The base64 encoded string of the original image (without data prefix if possible, but we handle it).
+ * @param base64Image The base64 encoded string of the original image.
  * @returns The base64 string of the processed image.
  */
 export const removeBackground = async (base64Image: string): Promise<string> => {
   const ai = getClient();
   
-  // Clean base64 string if it contains the data URL prefix
-  const cleanBase64 = base64Image.replace(/^data:image\/(png|jpeg|jpg|webp);base64,/, "");
+  // Extract real mime type from base64 header (e.g., data:image/png;base64,...)
+  const mimeMatch = base64Image.match(/^data:(image\/[a-zA-Z+]+);base64,/);
+  const mimeType = mimeMatch ? mimeMatch[1] : 'image/jpeg';
+
+  // Clean base64 string (remove data URL prefix)
+  const cleanBase64 = base64Image.replace(/^data:image\/[a-zA-Z+]+;base64,/, "");
 
   try {
     const response = await ai.models.generateContent({
@@ -27,7 +39,7 @@ export const removeBackground = async (base64Image: string): Promise<string> => 
           {
             inlineData: {
               data: cleanBase64,
-              mimeType: 'image/jpeg', // Assuming JPEG for input, but the model is flexible.
+              mimeType: mimeType, 
             },
           },
           {
@@ -35,7 +47,6 @@ export const removeBackground = async (base64Image: string): Promise<string> => 
           },
         ],
       },
-      // Note: responseMimeType is not supported for nano banana series models, so we don't set it.
     });
 
     // Iterate through parts to find the image
