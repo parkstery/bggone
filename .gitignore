@@ -1,4 +1,6 @@
+# 테스트를 위해.
 # Logs
+
 logs
 *.log
 npm-debug.log*
@@ -7,6 +9,7 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
+# Dependencies
 node_modules
 dist
 dist-ssr
@@ -18,7 +21,14 @@ dist-ssr
 .idea
 .DS_Store
 *.suo
-*.ntvs*
+*.ntvs
 *.njsproj
 *.sln
 *.sw?
+
+# Environment variables (보안상 절대 업로드 금지)
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
